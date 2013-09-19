@@ -1,5 +1,6 @@
 package;
 
+import flash.geom.Point;
 import flash.events.Event;
 import flash.ui.Keyboard;
 import flash.events.KeyboardEvent;
@@ -73,16 +74,22 @@ class Main extends Sprite {
 
     function onEnterFrame(event:Event) {
         if (upp) {
-            spelare.y -= 3;
+            flyttaSprite(spelare, 2);
         }
         if (ner) {
-            spelare.y += 3;
+            flyttaSprite(spelare, -2);
         }
         if (vanster) {
-            spelare.x -= 3;
+            spelare.rotation -= 3;
         }
         if (hoger) {
-            spelare.x += 3;
+            spelare.rotation += 3;
         }
+    }
+
+    function flyttaSprite(sprite:Sprite, fart:Float) {
+        var p = sprite.transform.matrix.transformPoint(new Point(0, -fart));
+        sprite.x = p.x;
+        sprite.y = p.y;
     }
 }
