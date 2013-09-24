@@ -33,6 +33,9 @@ class Generator
       opt.on('-v', '--verbose', 'verbose') do
         @options[:verbose] = true
       end
+      opt.on('-j', '--jekyll', 'export for jekyll') do
+        @options[:jekyll] = true
+      end
     end.parse!
 
     @fileutils_options = {}
@@ -67,20 +70,29 @@ class Generator
   end
 
   def setup_index_html
-    index_filename = File.join(OUTPUT_DIR, 'index.html')
+    index_filename = File.join(OUTPUT_DIR, @options[:jekyll] ? 'haxespel.html' : 'index.html')
     @options[:verbose] && warn("Generating #{index_filename}")
     index_html = @options[:dryrun] ? STDERR : File.open(index_filename, 'w')
-    index_html.write <<eos
-    <!DOCTYPE html>
-    <html lang="sv">
-    <head>
-    <meta charset="utf-8">
-    <title>HaxeSpel</title>
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
-    </head>
-    <body>
-    <div class="container">
+    if @options[:jekyll] then
+      index_html.write <<eos
+---
+title: HaxeSpel
+layout: page
+---
 eos
+    else
+      index_html.write <<eos
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>HaxeSpel</title>
+<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+eos
+    end
     index_html
   end
 
@@ -108,11 +120,13 @@ eos
   end
 
   def finish_index_html(index_html)
-    index_html.write <<eos
-    </div>
-    </body>
-    </html>
+    unless @options[:jekyll] then
+      index_html.write <<eos
+</div>
+</body>
+</html>
 eos
+    end
     !@options[:dryrun] || index_html.close
   end
 
