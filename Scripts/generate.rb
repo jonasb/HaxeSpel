@@ -87,8 +87,24 @@ eos
   def generate_chapters(index_html, markdown_files)
     markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML, :autolink => true, :space_after_headers => true)
     markdown_files.each do |markdown_file|
-      index_html.write(markdown.render(IO.read(markdown_file)))
+      md = IO.read(markdown_file)
+      md = preprocess_markdown(md)
+      index_html.write(markdown.render(md))
     end
+  end
+
+  def preprocess_markdown(md)
+    md = md.gsub(/^@include_git_show\(([^)]+)\)$/) do |_|
+      git_show_arg = $1.split(' ')
+      content = git_cmd('show', *git_show_arg)
+      content.gsub(/^/, '    ')
+    end
+    md = md.gsub(/^@include_git_diff\(([^)]+)\)$/) do |_|
+      git_diff_arg = $1.split(' ')
+      content = git_cmd('diff', *git_diff_arg)
+      content.gsub(/^/, '    ')
+    end
+    md
   end
 
   def finish_index_html(index_html)
@@ -98,6 +114,11 @@ eos
     </html>
 eos
     !@options[:dryrun] || index_html.close
+  end
+
+  def git_cmd(*args)
+    @options[:verbose] && warn("git #{args.join ' '}")
+    IO.popen(['git'] + args) {|f| return f.read }
   end
 end
 
